@@ -1,0 +1,28 @@
+{
+  "name": "object-stream",
+  "version": "0.0.1",
+  "description": "Simple raw stream to object stream converter",
+  "main": "lib/index.js",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prepack": "node ./build/build.js",
+    "pretest": "node ./build/build.js",
+    "test": "node test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BobdenOs/object-stream.git"
+  },
+  "keywords": [
+    "json",
+    "object",
+    "stream"
+  ],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/BobdenOs/object-stream/issues"
+  },
+  "homepage": "https://github.com/BobdenOs/object-stream#readme"
+}
