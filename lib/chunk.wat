@@ -21,13 +21,7 @@
         local.tee $char
         ;; check if the character is zero
         i32.eqz
-        (if
-          (then
-            i32.const 0
-            local.set $index
-            br $ret
-          )
-        )
+        br_if $ret
 
         ;; add one to $index
         local.get $index
@@ -113,8 +107,77 @@
   )
 
   (func $literal (param $index i32) (result i32)
-    ;; TODO: implement
-    i32.const 0
+    (local $char i32)
+
+    (block $ret
+      (loop $continue
+        ;; load character at $index
+        local.get $index
+        i32.load8_u
+        local.tee $char
+        ;; check if the character is zero
+        i32.eqz
+        br_if $ret
+
+        ;; check if the character is whitespace
+        local.get $char
+        call $whitespace
+        i32.eqz
+        (if
+          (then
+            local.get $index
+            call $exit
+            br $ret
+          )
+        )
+
+        ;; check if the character is ] (93)
+        local.get $char
+        i32.const 93
+        i32.eq
+        (if
+          (then
+            local.get $index
+            call $exit
+            br $ret
+          )
+        )
+
+        ;; check if the character is } (125)
+        local.get $char
+        i32.const 125
+        i32.eq
+        (if
+          (then
+            local.get $index
+            call $exit
+            br $ret
+          )
+        )
+
+        ;; check if the character is , (44)
+        local.get $char
+        i32.const 44
+        i32.eq
+        (if
+          (then
+            local.get $index
+            call $exit
+            br $ret
+          )
+        )
+
+        ;; add one to $index
+        local.get $index
+        i32.const 1
+        i32.add
+        local.set $index
+
+        br $continue
+      )
+    )
+
+    local.get $index
   )
 
   (func $string (param $index i32) (result i32)
@@ -126,15 +189,11 @@
         local.get $index
         i32.load8_u
         local.tee $char
+
         ;; check if the character is zero
+        local.get $char
         i32.eqz
-        (if
-          (then
-            i32.const 0
-            local.set $index
-            br $ret
-          )
-        )
+        br_if $ret
 
         ;; add one to $index
         local.get $index
@@ -148,6 +207,11 @@
         i32.eq
         (if
           (then
+            ;; add one to $index
+            local.get $index
+            i32.const 1
+            i32.add
+            local.set $index
             br $continue
           )
         )
@@ -182,13 +246,7 @@
         local.tee $char
         ;; check if the character is zero
         i32.eqz
-        (if
-          (then
-            i32.const 0
-            local.set $index
-            br $ret
-          )
-        )
+        br_if $ret
 
         ;; check if the character is ] (93)
         local.get $char
@@ -257,13 +315,7 @@
         local.tee $char
         ;; check if the character is zero
         i32.eqz
-        (if
-          (then
-            i32.const 0
-            local.set $index
-            br $ret
-          )
-        )
+        br_if $ret
 
         ;; check if the character is } (125)
         local.get $char
@@ -334,13 +386,7 @@
         local.tee $char
         ;; check if the character is zero
         i32.eqz
-        (if
-          (then
-            i32.const 0
-            local.set $index
-            br $ret
-          )
-        )
+        br_if $ret
 
         ;; add one to $index
         local.get $index
@@ -637,16 +683,20 @@
       (loop $continue
         local.get $index
         call $call_type
-        local.tee $cur
+        local.set $index
+
+        ;; Check if the last read character was zero
+        local.get $index
+        ;; load character at $index
+        i32.load8_u
         i32.eqz
         br_if $ret
-        local.get $cur
-        local.set $index
         br $continue
       )
     )
 
-    ;; return if there is a valid JSON
-    i32.const 0
+    local.get $index
+    i32.const 65536
+    i32.sub
   )
 )
