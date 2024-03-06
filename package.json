@@ -4,7 +4,8 @@
   "description": "Simple raw stream to object stream converter",
   "main": "lib/index.js",
   "files": [
-    "lib"
+    "lib/index.js",
+    "lib/chunk.wasm"
   ],
   "scripts": {
     "prepack": "node ./build/build.js",
