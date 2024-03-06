@@ -1,6 +1,8 @@
 const fs = require('fs')
 
 const files = fs.readdirSync(__dirname)
+const only = process.argv.slice(2).find(a => a.endsWith('.test.js'))
+
 
   ;
 (async () => {
@@ -10,6 +12,7 @@ const files = fs.readdirSync(__dirname)
   for (const file of files) {
     // skip self
     if (!file.endsWith('.test.js')) continue
+    if (only && !file.endsWith(only)) continue
 
     let status = 'fulfilled'
     let reason, start
