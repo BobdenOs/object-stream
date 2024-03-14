@@ -5,12 +5,17 @@ const { JSONStream } = require('../lib')
 
 module.exports = (async () => {
   const source = Readable.from((function* () {
-    yield '    ['
-    yield '{"a"'
-    yield ':"b"}]'
+    // Split up properties over chunk to ensure proper concatenation
+    yield '{"pr'
+    yield 'e":[{"0":"0"}],"d'
+    yield 'ata":[{"a":"b"}],"p'
+    yield 'o'
+    yield 'st":[{"1":"1"}]}'
   })(), { objectMode: false })
 
-  const json = new JSONStream()
+  const json = new JSONStream({
+    filter: ['data']
+  })
 
   source.pipe(json)
 

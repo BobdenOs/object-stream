@@ -3,11 +3,12 @@
   ;;      0 - i32 start of current json
   ;;      4 - i32 end of current json
   ;;      8 - i32 index of last valid
-  ;;     12 - i32 index of current parse state
+  ;;     12 - i32 depth of target entry
+  ;;     16 - i32 index of current parse state
   ;;    +20 - i8 list of parse state stack
   ;; +65536 - utf-8 json string being parsed
   (memory (import "js" "mem") 2)
-  ;; (import "js" "callback" (func $callback (param i64)))
+  (import "js" "callback" (func $callback (param i32)))
 
   (func $value (param $index i32) (result i32)
     (local $char i32)
@@ -81,16 +82,7 @@
         local.get $char
         call $whitespace
         i32.eqz
-        (if
-          (then
-            ;; add one to $index
-            local.get $index
-            i32.const 1
-            i32.add
-            local.set $index
-            br $continue
-          )
-        )
+        br_if $continue
 
         ;; assume any other character to start a literal value
         local.get $index
@@ -450,7 +442,8 @@
   (func $store_valid_from (param $index i32)
     i32.const 0
     i32.load
-    i32.eqz
+    i32.const -1
+    i32.eq
     (if
       (then
         i32.const 0
@@ -487,21 +480,9 @@
   (func $enter (param $type i32)
     (local $index i32)
 
-    i32.const 12
+    i32.const 16
+    i32.const 16
     i32.load
-    local.tee $index
-
-    ;; initialize parse state index
-    i32.eqz
-    (if
-      (then
-        i32.const 24 ;; 192
-        local.set $index
-      )
-    )
-
-    i32.const 12
-    local.get $index
     i32.const 1
     i32.add
     local.tee $index
@@ -516,52 +497,90 @@
   (func $exit (param $cur_index i32)
     (local $type i32)
     (local $index i32)
+    (local $target i32)
 
-    i32.const 12
+    i32.const 16
     i32.load
     local.tee $index
-
-    ;; initialize parse state index
-    i32.eqz
-    (if
-      (then
-        i32.const 24 ;; 192
-        local.set $index
-      )
-    )
-
-    local.get $index
     i32.load8_u
     local.set $type
 
     ;; TODO: REMOVE: DEBUG MEMORY CLEAN UP
-    local.get $index
-    i32.const 0
-    i32.store8
+    ;; local.get $index
+    ;; i32.const 0
+    ;; i32.store8
 
-    i32.const 12
+    i32.const 16
     local.get $index
     i32.const 1
     i32.sub
     local.tee $index
     i32.store
 
-    ;; process valid object when reaching depth 1 again
-    local.get $index
-    i32.const 24 ;; 24(0)
-    i32.eq
+    ;; check if the target is set
+    i32.const 12
+    i32.load
+    i32.eqz
     (if
       (then
-        local.get $type
-        i32.eqz
+        local.get $index
+        i32.load8_u
+        i32.const 5 ;; property
+        i32.eq
         (if
           (then
+            ;; List index of the current property
             local.get $cur_index
-            call $store_valid_from
+            i32.const 65536
+            i32.sub
+            call $callback
           )
           (else
-            local.get $cur_index
-            call $store_valid_to
+            local.get $type
+            i32.const 5 ;; property
+            i32.ne
+            local.get $type
+            i32.mul
+            (if
+              (then
+                ;; check if leaving object property value
+                local.get $index
+                i32.load8_u
+                i32.const 4 ;; object
+                i32.eq
+                (if
+                  (then
+                    ;; notify the removal of a property from the path
+                    i32.const -1
+                    call $callback
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+      (else
+        ;; process valid object when reaching target depth
+        local.get $index
+        i32.const 12
+        i32.load
+        ;; i32.const 24 ;; 24(0)
+        i32.eq
+        (if
+          (then
+            local.get $type
+            i32.eqz
+            (if
+              (then
+                local.get $cur_index
+                call $store_valid_from
+              )
+              (else
+                local.get $cur_index
+                call $store_valid_to
+              )
+            )
           )
         )
       )
@@ -572,26 +591,28 @@
     (local $type_index i32)
     (local $type i32)
 
-    i32.const 12
+    ;; load type value at the current state index
+    i32.const 16
     i32.load
     local.tee $type_index
-
-    ;; initialize parse state index
-    i32.eqz
-    (if
-      (then
-        i32.const 24
-        local.set $type_index
-      )
-    )
-
-    ;; load type value at the current state index
-    local.get $type_index
     i32.load8_u
     local.set $type
 
     ;; call type parser
     (block $ret (result i32)
+      ;; disable target when leaving target range
+      local.get $type_index
+      i32.const 12
+      i32.load
+      i32.lt_u
+      (if
+        (then
+          i32.const 12
+          i32.const 1 ;; set target to 1 (0> x <23)
+          i32.store
+        )
+      )
+
       local.get $type
       i32.eqz ;; value
       (if
@@ -667,14 +688,26 @@
 
     ;; reset to 0
     i32.const 0
-    i32.const 0
+    i32.const -1
     i32.store ;; valid start
     i32.const 4
-    i32.const 0
+    i32.const -1
     i32.store ;; valid to
     i32.const 8
     i32.const 0
     i32.store ;; valid start last
+
+    ;; initialize parse state index
+    i32.const 16
+    i32.load
+    i32.eqz
+    (if
+      (then
+        i32.const 16
+        i32.const 24
+        i32.store
+      )
+    )
 
     i32.const 65536
     local.set $index
