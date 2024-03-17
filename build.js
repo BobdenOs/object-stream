@@ -19,27 +19,29 @@ if (!curPlatform) {
   process.exit(1)
 }
 
+const buildDir = resolve(__dirname, 'build')
+
 const extract = function () {
-  execSync(`tar${exe} -x -f wabt.tar.gz wabt-${wabtVersion}/bin/wat2wasm${exe}`, { cwd: __dirname })
+  execSync(`tar${exe} -x -f wabt.tar.gz wabt-${wabtVersion}/bin/wat2wasm${exe}`, { cwd: buildDir })
   copyFileSync(
-    resolve(__dirname, `wabt-${wabtVersion}/bin/wat2wasm${exe}`),
-    resolve(__dirname, `wat2wasm${exe}`)
+    resolve(buildDir, `wabt-${wabtVersion}/bin/wat2wasm${exe}`),
+    resolve(buildDir, `wat2wasm${exe}`)
   )
-  rmSync(resolve(__dirname, `wabt-${wabtVersion}`), { force: true, recursive: true })
-  rmSync(resolve(__dirname, 'wabt.tar.gz'))
+  rmSync(resolve(buildDir, `wabt-${wabtVersion}`), { force: true, recursive: true })
+  rmSync(resolve(buildDir, 'wabt.tar.gz'))
 }
 
 const compile = function () {
-  execSync(`./wat2wasm${exe} -o ../lib/chunk.wasm ../lib/chunk.wat`, { cwd: __dirname })
+  execSync(`./wat2wasm${exe} -o ../lib/chunk.wasm ../lib/chunk.wat`, { cwd: buildDir })
 }
 
 try {
   // Check that wat2wasm exists
-  statSync(resolve(__dirname, `./wat2wasm${exe}`))
+  statSync(resolve(buildDir, `./wat2wasm${exe}`))
   compile()
 } catch (err) {
   // Download wabt archive
-  const file = createWriteStream(resolve(__dirname, 'wabt.tar.gz'), {
+  const file = createWriteStream(resolve(buildDir, 'wabt.tar.gz'), {
     flags: 'wx', // Fail if the file already exists
   })
 

@@ -130,5 +130,7 @@ dist
 .pnp.*
 
 # wasm
+build/*/
 build/*.tar.gz
 build/*.exe
+build/wat2wasm

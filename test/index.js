@@ -1,7 +1,7 @@
 const fs = require('fs')
 
 const files = fs.readdirSync(__dirname)
-const only = process.argv.slice(2).find(a => a.endsWith('.test.js'))
+const only = process.argv.slice(2).filter(a => a.endsWith('.test.js'))
 
 
   ;
@@ -12,7 +12,7 @@ const only = process.argv.slice(2).find(a => a.endsWith('.test.js'))
   for (const file of files) {
     // skip self
     if (!file.endsWith('.test.js')) continue
-    if (only && !file.endsWith(only)) continue
+    if (only.length > 0 && !only.includes(file)) continue
 
     let status = 'fulfilled'
     let reason, start
@@ -39,5 +39,6 @@ const only = process.argv.slice(2).find(a => a.endsWith('.test.js'))
     }
   }
   console.log(logs.join('\n'))
+  console.log(require('./utils/performance.js').summary())
   process.exit(failures)
 })()

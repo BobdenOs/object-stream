@@ -8,8 +8,10 @@
     "lib/chunk.wasm"
   ],
   "scripts": {
-    "prepack": "node ./build/build.js",
-    "pretest": "node ./build/build.js",
+    "build": "node-gyp build && node ./build/build.js",
+    "build:debug": "node-gyp build -d && npm run build",
+    "prepack": "npm run build",
+    "pretest": "npm run build",
     "test": "node test/index.js"
   },
   "repository": {
@@ -25,5 +27,13 @@
   "bugs": {
     "url": "https://github.com/BobdenOs/object-stream/issues"
   },
-  "homepage": "https://github.com/BobdenOs/object-stream#readme"
+  "homepage": "https://github.com/BobdenOs/object-stream#readme",
+  "dependencies": {
+    "node-addon-api": "^8.0.0",
+    "bindings": "^1.5.0"
+  },
+  "devDependencies": {
+    "node-gyp": "^10.0.1"
+  },
+  "gypfile": true
 }
