@@ -30,12 +30,12 @@ const extract = function () {
 }
 
 const compile = function () {
-  execSync(`wat2wasm${exe} -o ../lib/chunk.wasm ../lib/chunk.wat`, { cwd: __dirname })
+  execSync(`./wat2wasm${exe} -o ../lib/chunk.wasm ../lib/chunk.wat`, { cwd: __dirname })
 }
 
 try {
   // Check that wat2wasm exists
-  statSync(resolve(__dirname, `wat2wasm${exe}`))
+  statSync(resolve(__dirname, `./wat2wasm${exe}`))
   compile()
 } catch (err) {
   // Download wabt archive
